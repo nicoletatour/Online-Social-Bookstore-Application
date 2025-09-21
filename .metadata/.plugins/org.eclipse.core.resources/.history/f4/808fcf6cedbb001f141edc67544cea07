@@ -1,0 +1,52 @@
+package myy803.socialbookstore;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import myy803.socialbookstore.datamodel.UserProfile;
+import myy803.socialbookstore.formsdata.UserProfileDto;
+import myy803.socialbookstore.mappers.UserProfileMapper;
+import myy803.socialbookstore.services.UserProfileService;
+
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
+public class SocialBookStoreTests {
+
+    @Autowired
+    private UserProfileService userProfileService;
+
+    @MockBean
+    private UserProfileMapper userProfileMapper;
+
+    private UserProfileDto userProfileDto;
+    private UserProfile userProfile;
+
+    @BeforeEach
+    public void setUp() {
+        userProfileDto = new UserProfileDto();
+        userProfileDto.setUsername("testUser");
+        
+        userProfile = new UserProfile();
+        userProfile.setUsername("testUser");
+
+        when(userProfileMapper.findById(any(String.class))).thenReturn(Optional.of(userProfile));
+    }
+
+    @Test
+    public void testSaveProfileBusinessLogic() {
+        userProfileService.saveProfileBusinessLogic(userProfileDto);
+        
+        verify(userProfileMapper).save(any(UserProfile.class));
+    }
+}

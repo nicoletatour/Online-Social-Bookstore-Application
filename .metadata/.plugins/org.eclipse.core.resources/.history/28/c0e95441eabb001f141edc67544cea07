@@ -1,0 +1,49 @@
+package myy803.socialbookstore;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import myy803.socialbookstore.datamodel.UserProfile;
+import myy803.socialbookstore.formsdata.UserProfileDto;
+import myy803.socialbookstore.mappers.UserProfileMapper;
+import myy803.socialbookstore.services.UserProfileService;
+@RunWith(SpringRunner.class)
+@SpringBootTest
+public class UserProfileServiceTest {
+
+    @Autowired
+    private UserProfileService userProfileService;
+
+    @MockBean
+    private UserProfileRepository userProfileRepository; // Assuming the repository
+
+    @Test
+    public void testSaveUserProfile() {
+        // Given
+        UserProfile userProfile = new UserProfile();
+        userProfile.setUsername("testuser");
+        userProfile.setFullName("Test User");
+        userProfile.setAge(25);
+
+        when(userProfileRepository.save(any(UserProfile.class))).thenReturn(userProfile);
+
+        // When
+        UserProfile savedUserProfile = userProfileService.saveUserProfile(userProfile);
+
+        // Then
+        assertNotNull(savedUserProfile);
+        assertEquals("testuser", savedUserProfile.getUsername());
+        verify(userProfileRepository).save(userProfile);
+    }
+}

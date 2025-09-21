@@ -1,0 +1,11 @@
+package myy803.socialbookstore.datamodel.searchstrategies;
+
+import java.util.ArrayList;
+
+import myy803.socialbookstore.formsdata.BookDTO;
+import myy803.socialbookstore.formsdata.SearchDto;
+import myy803.socialbookstore.mappers.BookMapper;
+
+public interface SearchStrategy {
+	ArrayList<BookDTO> search(SearchDto bookDto, BookMapper bookMapper);
+}

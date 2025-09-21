@@ -1,0 +1,50 @@
+package myy803.socialbookstore.controllers;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import myy803.socialbookstore.datamodel.BookCategory;
+import myy803.socialbookstore.formsdata.BookDTO;
+import myy803.socialbookstore.formsdata.SearchDTO;
+import myy803.socialbookstore.services.SearchService;
+import myy803.socialbookstore.services.UserProfileService;
+
+@Controller
+@RequestMapping("/user")
+public class SearchController {
+
+    @Autowired
+    private SearchService searchService;
+    
+    @Autowired
+    private UserProfileService userProfileService;
+
+    @RequestMapping("/search_offer")
+    public String search(@ModelAttribute("searchDto") SearchDTO searchDto, Model model) {
+        List<BookDTO> bookDtos = searchService.searchBusinessLogic(searchDto);
+        model.addAttribute("books", bookDtos);
+        return "user/search_results";
+    }
+
+    @RequestMapping("/search")
+    public String showSearchForm(Model model) {
+        SearchDTO searchDto = new SearchDTO();
+        searchDto.setSearchStrategies(new ArrayList<>(Arrays.asList("Exact", "Approximate", "Category")));
+
+        List<BookCategory> categories = userProfileService.getAllCategories();
+
+        model.addAttribute("searchDto", searchDto);
+        model.addAttribute("categories", categories);
+
+        return "user/search_form";
+    }
+
+
+}

@@ -1,0 +1,13 @@
+package myy803.socialbookstore.services;
+
+import java.util.List;
+
+import myy803.socialbookstore.datamodel.BookCategory;
+import myy803.socialbookstore.formsdata.BookDto;
+
+public interface BookOfferService {
+    List<BookDto> listBookOffersBusinessLogic(String username);
+    List<BookCategory> getAllCategories();
+    void saveBookOfferBusinessLogic(String username, BookDto bookOfferDto);
+    void deleteBookOfferBusinessLogic(int bookId);
+}

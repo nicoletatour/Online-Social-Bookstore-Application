@@ -1,0 +1,59 @@
+package myy803.socialbookstore.controllers;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+
+import myy803.socialbookstore.datamodel.BookCategory;
+import myy803.socialbookstore.formsdata.UserProfileDTO;
+import myy803.socialbookstore.services.BookRequestServiceImpl;
+import myy803.socialbookstore.services.UserProfileService;
+
+@Controller
+@RequestMapping("/user")
+public class UserProfileController {
+
+    @Autowired
+    private UserProfileService userProfileService;
+
+    @RequestMapping("/profile")
+    public String retrieveProfile(Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        System.err.println("Logged user: " + username);
+
+        List<BookCategory> categories = userProfileService.getAllCategories();
+        model.addAttribute("categories", categories);
+
+        UserProfileDTO userProfileDto = userProfileService.retrieveProfileBusinessLogic(username);
+        model.addAttribute("profile", userProfileDto);
+
+        return "user/profile";
+    }
+
+    @RequestMapping("/save_profile")
+    public String saveProfile(@ModelAttribute("profile") UserProfileDTO userProfileDto) {
+        System.err.println(userProfileDto.toString());
+        userProfileService.saveProfileBusinessLogic(userProfileDto);
+        return "user/dashboard";
+    }
+
+    @RequestMapping("/dashboard")
+    public String getUserMainMenu(Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        String notification = BookRequestServiceImpl.getAndRemoveUserNotification(username);
+        if (notification != null) {
+            model.addAttribute("notification", notification);
+        }
+
+        return "user/dashboard";
+    }
+}

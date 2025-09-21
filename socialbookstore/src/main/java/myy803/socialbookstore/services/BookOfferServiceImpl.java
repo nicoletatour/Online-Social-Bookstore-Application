@@ -1,0 +1,65 @@
+package myy803.socialbookstore.services;
+
+import java.util.List;
+import java.util.Optional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import myy803.socialbookstore.datamodel.Book;
+import myy803.socialbookstore.datamodel.BookCategory;
+import myy803.socialbookstore.datamodel.UserProfile;
+import myy803.socialbookstore.formsdata.BookDTO;
+import myy803.socialbookstore.mappers.BookAuthorMapper;
+import myy803.socialbookstore.mappers.BookCategoryMapper;
+import myy803.socialbookstore.mappers.BookMapper;
+import myy803.socialbookstore.mappers.UserProfileMapper;
+
+
+@Service
+public class BookOfferServiceImpl implements BookOfferService {
+
+    @Autowired
+    private UserProfileMapper userProfileMapper;
+
+    @Autowired
+    private BookCategoryMapper bookCategoryMapper;
+
+    @Autowired
+    private BookAuthorMapper bookAuthorMapper;
+
+    @Autowired
+    private BookMapper bookMapper;
+
+    @Override
+    public List<BookDTO> listBookOffersBusinessLogic(String username) {
+        Optional<UserProfile> optUserProfile = userProfileMapper.findById(username);
+        if (optUserProfile.isPresent()) {
+            return optUserProfile.get().buildBookOffersDtos();
+        }
+        throw new IllegalArgumentException("User profile not found for username: " + username);
+    }
+
+    @Override
+    public List<BookCategory> getAllCategories() {
+        return bookCategoryMapper.findAll();
+    }
+
+    @Override
+    public void saveBookOfferBusinessLogic(String username, BookDTO bookOfferDto) {
+        Optional<UserProfile> optUserProfile = userProfileMapper.findById(username);
+        if (optUserProfile.isPresent()) {
+            UserProfile userProfile = optUserProfile.get();
+            Book bookOffer = bookOfferDto.buildBookOffer(bookAuthorMapper, bookCategoryMapper);
+            userProfile.addBookOffer(bookOffer);
+            userProfileMapper.save(userProfile);
+        } else {
+            throw new IllegalArgumentException("User profile not found for username: " + username);
+        }
+    }
+
+    @Override
+    public void deleteBookOfferBusinessLogic(int bookId) {
+        bookMapper.deleteById(bookId);
+    }
+}

@@ -1,0 +1,128 @@
+package myy803.socialbookstore.services;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import myy803.socialbookstore.datamodel.Book;
+import myy803.socialbookstore.datamodel.UserProfile;
+import myy803.socialbookstore.formsdata.BookDTO;
+import myy803.socialbookstore.formsdata.UserProfileDTO;
+import myy803.socialbookstore.mappers.BookMapper;
+import myy803.socialbookstore.mappers.UserProfileMapper;
+
+@Service
+public class BookRequestServiceImpl implements BookRequestService {
+
+    @Autowired
+    private BookMapper bookMapper;
+
+    @Autowired
+    private UserProfileMapper userProfileMapper;
+    
+    private static final Map<String, String> userNotifications = new ConcurrentHashMap<>();
+
+    @Override
+    public void requestBusinessLogic(String username, int bookId) {
+        Optional<Book> optionalBook = bookMapper.findById(bookId);
+        Optional<UserProfile> userProfile = userProfileMapper.findById(username);
+
+        if (optionalBook.isPresent() && userProfile.isPresent()) {
+            optionalBook.get().addRequestingUser(userProfile.get());
+            bookMapper.save(optionalBook.get());
+        } else {
+            throw new IllegalArgumentException("Book or User not found.");
+        }
+    }
+
+    @Override
+    public List<BookDTO> showUserBookRequestsBusinessLogic(String username) {
+        Optional<UserProfile> userProfile = userProfileMapper.findById(username);
+
+        if (userProfile.isPresent()) {
+            return userProfile.get().buildBookRequestsDtos();
+        }
+        throw new IllegalArgumentException("User profile not found.");
+    }
+
+    @Override
+    public List<UserProfileDTO> showRequestingUsersForBookOfferBusinessLogic(int bookId) {
+        Optional<Book> book = bookMapper.findById(bookId);
+
+        if (book.isPresent()) {
+            return book.get().getRequestingUserProfileDtos();
+        }
+        throw new IllegalArgumentException("Book not found.");
+    }
+
+    @Override
+    public void acceptBookRequestBusinessLogic(String username, int bookId) {
+        Optional<Book> optionalBook = bookMapper.findById(bookId);
+        if (!optionalBook.isPresent()) {
+            throw new IllegalArgumentException("Book not found.");
+        }
+
+        Book book = optionalBook.get();
+        List<UserProfile> requestingUsers = book.getRequestingUsers();
+
+        UserProfile chosenUser = null;
+        for (UserProfile u : requestingUsers) {
+            if (u.getUsername().equals(username)) {
+                chosenUser = u;
+                break;
+            }
+        }
+        if (chosenUser == null) {
+            throw new IllegalArgumentException("Selected user did not request this book.");
+        }
+
+        List<UserProfile> allUsers = userProfileMapper.findAll();
+        for (UserProfile up : allUsers) {
+            if (up.getBookOffers().contains(book)) {
+                up.getBookOffers().remove(book);
+                userProfileMapper.save(up);
+                break;
+            }
+        }
+
+        userNotifications.put(chosenUser.getUsername(),
+            "Your request for the book '" + book.getTitle() + "' has been accepted!");
+
+        for (UserProfile u : requestingUsers) {
+            if (!u.getUsername().equals(chosenUser.getUsername())) {
+                userNotifications.put(u.getUsername(),
+                    "The book '" + book.getTitle() + "' you requested has been taken by another user.");
+            }
+        }
+        requestingUsers.clear();
+        bookMapper.delete(book);
+    }
+
+
+    public static String getAndRemoveUserNotification(String username) {
+        return userNotifications.remove(username);
+    }
+
+    @Override
+    public void deleteBookRequestBusinessLogic(int bookId, String username) {
+        Optional<Book> optionalBook = bookMapper.findById(bookId);
+        UserProfile user = userProfileMapper.findByUsername(username);
+
+        if (optionalBook.isPresent() && user != null) {
+            Book book = optionalBook.get();
+
+            if (book.getRequestingUsers().contains(user)) {
+                book.getRequestingUsers().remove(user);
+                bookMapper.save(book);
+            }
+        } else {
+            throw new IllegalArgumentException("Book not found or user does not exist");
+        }
+    }
+
+
+}

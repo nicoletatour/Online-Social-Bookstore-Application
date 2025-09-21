@@ -1,0 +1,24 @@
+package myy803.socialbookstore.services;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import myy803.socialbookstore.datamodel.recomstrategies.RecommendationsFactory;
+import myy803.socialbookstore.datamodel.recomstrategies.RecommendationsStrategy;
+import myy803.socialbookstore.formsdata.BookDTO;
+import myy803.socialbookstore.formsdata.RecommendationsDto;
+
+@Service
+public class RecommendationServiceImpl implements RecommendationService {
+
+    @Autowired
+    private RecommendationsFactory recommendationsFactory;
+
+    @Override
+    public List<BookDTO> recommendBusinessLogic(String username, RecommendationsDto recomDto) {
+        RecommendationsStrategy recommendationsStrategy = recommendationsFactory.create(recomDto.getSelectedStrategy());
+        return recommendationsStrategy.recommend(username);
+    }
+}

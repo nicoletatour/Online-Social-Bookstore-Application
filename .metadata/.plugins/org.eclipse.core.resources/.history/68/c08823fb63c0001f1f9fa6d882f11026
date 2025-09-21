@@ -1,0 +1,5 @@
+package myy803.socialbookstore.datamodel.recomstrategies;
+
+public class FavouriteAuthorsAndCategoriesIntersectionStrategy {
+
+}

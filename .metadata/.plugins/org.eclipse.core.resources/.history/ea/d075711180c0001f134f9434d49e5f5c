@@ -1,0 +1,59 @@
+package myy803.socialbookstore.controllers;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+
+import myy803.socialbookstore.datamodel.BookCategory;
+import myy803.socialbookstore.formsdata.BookDTO;
+import myy803.socialbookstore.services.BookOfferService;
+
+@Controller
+@RequestMapping("/user")
+public class BookOfferController {
+
+    @Autowired
+    private BookOfferService bookOfferService;
+
+    @RequestMapping("/offers")
+    public String listBookOffers(Model model) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+        
+        List<BookDTO> bookOffersDtos = bookOfferService.listBookOffersBusinessLogic(username);
+        model.addAttribute("offers", bookOffersDtos);
+
+        return "user/offers";
+    }
+
+    @RequestMapping("/show_offer_form")
+    public String showOfferForm(Model model) {
+        List<BookCategory> categories = bookOfferService.getAllCategories();
+        model.addAttribute("categories", categories);
+        model.addAttribute("offer", new BookDTO());
+
+        return "user/offer-form";
+    }
+
+    @RequestMapping("/save_offer")
+    public String saveOffer(@ModelAttribute("offer") BookDTO bookOfferDto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String username = authentication.getName();
+
+        bookOfferService.saveBookOfferBusinessLogic(username, bookOfferDto);
+        return "redirect:/user/offers";
+    }
+
+    @RequestMapping("/delete_book_offer")
+    public String deleteBookOffer(@RequestParam("selected_offer_id") int bookId) {
+        bookOfferService.deleteBookOfferBusinessLogic(bookId);
+        return "redirect:/user/offers";
+    }
+}

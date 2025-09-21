@@ -1,0 +1,122 @@
+package myy803.socialbookstore;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import myy803.socialbookstore.datamodel.Book;
+import myy803.socialbookstore.datamodel.BookAuthor;
+import myy803.socialbookstore.datamodel.BookCategory;
+import myy803.socialbookstore.datamodel.UserProfile;
+import myy803.socialbookstore.formsdata.BookDto;
+import myy803.socialbookstore.mappers.BookAuthorMapper;
+import myy803.socialbookstore.mappers.BookCategoryMapper;
+import myy803.socialbookstore.mappers.BookMapper;
+import myy803.socialbookstore.mappers.UserProfileMapper;
+import myy803.socialbookstore.services.BookOfferServiceImpl;
+
+@ExtendWith(SpringExtension.class)
+public class SocialBookStoreTests {
+
+    @Mock
+    private UserProfileMapper userProfileMapper;
+
+    @Mock
+    private BookMapper bookMapper;
+
+    @Mock
+    private BookCategoryMapper bookCategoryMapper;
+
+    @Mock
+    private BookAuthorMapper bookAuthorMapper;
+
+    @InjectMocks
+    private BookOfferServiceImpl bookOfferService;
+
+    private UserProfile userProfile;
+    private BookCategory bookCategory;
+    private BookAuthor bookAuthor;
+
+    @BeforeEach
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        // Mock δεδομένα
+        bookAuthor = new BookAuthor();
+        bookAuthor.setName("J.K. Rowling");
+
+        bookCategory = new BookCategory();
+        bookCategory.setName("Fantasy");
+
+        userProfile = new UserProfile();
+        userProfile.setUsername("ioanna");
+        userProfile.setFullName("Ioanna Ioanna");
+        userProfile.setAge(22);
+
+        List<BookAuthor> favoriteAuthors = new ArrayList<>();
+        favoriteAuthors.add(bookAuthor);
+        userProfile.setFavouriteBookAuthors(favoriteAuthors);
+    }
+    
+    @Test
+    public void testSaveUserProfile() {
+
+        UserProfile userProfile = userProfileMapper.findByUsername("ioanna");
+
+        assertTrue(userProfile != null, "UserProfile should not be null");
+
+        assertEquals("Ioanna Ioanna", userProfile.getFullName(), "Full name should match");
+        assertEquals(22, userProfile.getAge(), "Age should match");
+    }
+    
+
+    @Test
+    public void testSaveOffer() {
+        BookDto bookDto = new BookDto();
+        bookDto.setTitle("Harry Potter and the Philosopher's Stone");
+        bookDto.setAuthors("J.K. Rowling");
+        bookDto.setCategory("Fantasy");
+
+        List<BookCategory> categories = new ArrayList<>();
+        categories.add(bookCategory);
+        List<BookAuthor> authors = new ArrayList<>();
+        authors.add(bookAuthor);
+
+        
+        when(userProfileMapper.findById("ioanna")).thenReturn(Optional.of(userProfile));
+        when(bookCategoryMapper.findByName("Fantasy")).thenReturn(categories);
+        when(bookAuthorMapper.findByName("J.K. Rowling")).thenReturn(authors);
+
+       
+        bookOfferService.saveOfferBusinessLogic("ioanna", bookDto);
+
+        
+        verify(userProfileMapper).save(userProfile);
+    }
+
+    @Test
+    public void testDeleteBookOffer() {
+        // Mock δεδομένα
+        int bookId = 1;
+
+        // Εκτέλεση μεθόδου
+        bookOfferService.deleteBookOfferBusinessLogic(bookId);
+
+        // Επαλήθευση
+        verify(bookMapper).deleteById(bookId);
+    }
+}

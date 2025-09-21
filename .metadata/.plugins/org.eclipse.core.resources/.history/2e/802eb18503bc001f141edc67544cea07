@@ -1,0 +1,77 @@
+package myy803.socialbookstore;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import java.util.ArrayList;
+import java.util.List;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import myy803.socialbookstore.datamodel.Book;
+import myy803.socialbookstore.datamodel.BookAuthor;
+import myy803.socialbookstore.datamodel.BookCategory;
+import myy803.socialbookstore.datamodel.User;
+import myy803.socialbookstore.datamodel.UserProfile;
+import myy803.socialbookstore.mappers.BookAuthorMapper;
+import myy803.socialbookstore.mappers.BookCategoryMapper;
+import myy803.socialbookstore.mappers.BookMapper;
+import myy803.socialbookstore.mappers.UserMapper;
+import myy803.socialbookstore.mappers.UserProfileMapper;
+
+
+
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+public class SocialBookStoreTests {
+
+    @Autowired
+    private UserProfileMapper userProfileMapper;
+
+
+    @Autowired
+    private UserMapper userMapper;
+
+    private UserProfile userProfile;
+    private BookAuthor bookAuthor;
+    private User user;
+
+    @BeforeEach
+    public void setUp() {
+
+        user = new User();
+        user.setUsername("ioanna");
+        userMapper.save(user);
+
+        userProfile = new UserProfile();
+        userProfile.setUsername("ioanna");
+        userProfile.setFullName("Ioanna Ioanna");
+        userProfile.setAge(22);
+
+        List<BookAuthor> favoriteAuthors = new ArrayList<>();
+        favoriteAuthors.add(bookAuthor);
+        userProfile.setFavouriteBookAuthors(favoriteAuthors);
+
+
+        userProfileMapper.save(userProfile);
+    }
+    @Test
+    public void testSaveUserProfile() {
+
+        UserProfile userProfile = userProfileMapper.findByUsername("ioanna");
+
+        assertTrue(userProfile != null, "UserProfile should not be null");
+
+        assertEquals("Ioanna Ioanna", userProfile.getFullName(), "Full name should match");
+        assertEquals(22, userProfile.getAge(), "Age should match");
+    }
+
+
+
+}

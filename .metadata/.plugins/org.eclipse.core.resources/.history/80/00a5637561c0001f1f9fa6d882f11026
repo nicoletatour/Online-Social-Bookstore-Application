@@ -1,0 +1,196 @@
+package myy803.socialbookstore;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
+
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+import myy803.socialbookstore.datamodel.Book;
+import myy803.socialbookstore.datamodel.BookAuthor;
+import myy803.socialbookstore.datamodel.BookCategory;
+import myy803.socialbookstore.datamodel.UserProfile;
+import myy803.socialbookstore.datamodel.searchstrategies.ExactSearchStrategy;
+import myy803.socialbookstore.datamodel.searchstrategies.SearchFactory;
+import myy803.socialbookstore.formsdata.BookDTO;
+import myy803.socialbookstore.formsdata.SearchDTO;
+import myy803.socialbookstore.mappers.BookAuthorMapper;
+import myy803.socialbookstore.mappers.BookCategoryMapper;
+import myy803.socialbookstore.mappers.BookMapper;
+import myy803.socialbookstore.mappers.UserProfileMapper;
+import myy803.socialbookstore.services.BookOfferServiceImpl;
+import myy803.socialbookstore.services.BookRequestServiceImpl;
+import myy803.socialbookstore.services.SearchServiceImpl;
+
+@ExtendWith(SpringExtension.class)
+@SpringBootTest
+public class SocialBookStoreTests {
+
+    @Mock
+    private UserProfileMapper userProfileMapper;
+
+    @Mock
+    private BookMapper bookMapper;
+
+    @Mock
+    private BookCategoryMapper bookCategoryMapper;
+
+    @Mock
+    private BookAuthorMapper bookAuthorMapper;
+    
+    @InjectMocks
+    private SearchServiceImpl searchService;
+
+    @Mock
+    private SearchFactory searchFactory;
+
+    @InjectMocks
+    private BookOfferServiceImpl bookOfferService;
+    
+    @InjectMocks
+    private BookRequestServiceImpl bookRequestService;
+    
+
+
+
+    private UserProfile userProfile;
+    private BookCategory bookCategory;
+    private BookAuthor bookAuthor;
+    private Book book;
+
+    @BeforeEach
+    public void setUp() {
+        MockitoAnnotations.openMocks(this);
+
+        bookAuthor = new BookAuthor();
+        bookAuthor.setName("J.K. Rowling");
+
+        bookCategory = new BookCategory();
+        bookCategory.setName("Fantasy");
+
+        userProfile = new UserProfile();
+        userProfile.setUsername("ioanna");
+        userProfile.setFullName("Ioanna Ioanna");
+        userProfile.setAge(22);
+        
+        book = new Book("Harry Potter");
+        book.setOfferId(1);
+        book.getRequestingUsers().add(userProfile);
+
+        List<BookAuthor> favoriteAuthors = new ArrayList<>();
+        favoriteAuthors.add(bookAuthor);
+        userProfile.setFavouriteBookAuthors(favoriteAuthors);
+    }
+
+    @Test
+    public void testSaveUserProfile() {
+        when(userProfileMapper.findByUsername("ioanna")).thenReturn(userProfile);
+
+        UserProfile retrievedUserProfile = userProfileMapper.findByUsername("ioanna");
+
+        assertNotNull(retrievedUserProfile, "UserProfile should not be null");
+        assertEquals("Ioanna Ioanna", retrievedUserProfile.getFullName(), "Full name should match");
+        assertEquals(22, retrievedUserProfile.getAge(), "Age should match");
+    }
+
+    @Test
+    public void testSaveBookOffer() {
+        BookDTO bookDto = new BookDTO();
+        bookDto.setTitle("Harry Potter and the Philosopher's Stone");
+        bookDto.setAuthors("J.K. Rowling");
+        bookDto.setCategory("Fantasy");
+
+        List<BookCategory> categories = new ArrayList<>();
+        categories.add(bookCategory);
+        List<BookAuthor> authors = new ArrayList<>();
+        authors.add(bookAuthor);
+
+        when(userProfileMapper.findById("ioanna")).thenReturn(Optional.of(userProfile));
+        when(bookCategoryMapper.findByName("Fantasy")).thenReturn(categories);
+        when(bookAuthorMapper.findByName("J.K. Rowling")).thenReturn(authors);
+
+        bookOfferService.saveBookOfferBusinessLogic("ioanna", bookDto);
+
+        verify(userProfileMapper).save(userProfile);
+    }
+
+    @Test
+    public void testDeleteBookOffer() {
+        int bookId = 1;
+
+        bookOfferService.deleteBookOfferBusinessLogic(bookId);
+
+        verify(bookMapper).deleteById(bookId);
+    }
+    
+    @Test
+    public void testDeleteBookRequest() {
+        when(bookMapper.findById(1)).thenReturn(Optional.of(book));
+        when(userProfileMapper.findByUsername("ioanna")).thenReturn(userProfile);
+
+        bookRequestService.deleteBookRequestBusinessLogic(1, "ioanna");
+
+        assertEquals(0, book.getRequestingUsers().size());
+        verify(bookMapper).save(book);
+    }
+    
+    @Test
+    public void testAcceptRequest() {
+        when(bookMapper.findById(1)).thenReturn(Optional.of(book));
+
+        bookRequestService.acceptRequestBusinessLogic("ioanna", 1);
+
+        assertEquals(0, book.getRequestingUsers().size());
+        verify(bookMapper).delete(book);
+    }
+
+    @Test
+    public void testSearchFunctionality() {
+        // Mocking the SearchDTO object
+        SearchDTO searchDto = new SearchDTO();
+        searchDto.setTitle("Harry");
+        searchDto.setSelectedStrategy("Exact");
+
+        // Mocking the database response for the title search
+        List<Book> books = new ArrayList<>();
+        books.add(book); // Use the pre-defined book in the setUp() method
+        when(bookMapper.findByTitle("Harry")).thenReturn(books);
+
+        // Mocking the SearchFactory to return an instance of ExactSearchStrategy
+        when(searchFactory.create("Exact")).thenReturn(new ExactSearchStrategy());
+
+        // Executing the search logic
+        List<BookDTO> results = searchService.searchBusinessLogic(searchDto);
+
+        // Verifications
+        assertNotNull(results, "Results should not be null");
+        assertEquals(1, results.size(), "There should be one result");
+        assertEquals("Harry Potter", results.get(0).getTitle(), "Book title should match");
+
+        // Verify that the correct mapper method was called
+        verify(bookMapper).findByTitle("Harry");
+    }
+
+
+
+
+    //recommend
+    
+    
+
+    
+    
+}

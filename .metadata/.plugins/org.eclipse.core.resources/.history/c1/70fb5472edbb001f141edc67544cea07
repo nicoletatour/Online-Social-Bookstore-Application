@@ -1,0 +1,52 @@
+package myy803.socialbookstore;
+
+import myy803.socialbookstore.formsdata.UserProfileDto;
+import myy803.socialbookstore.services.UserProfileService;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.mockito.Mockito;
+import static org.mockito.ArgumentMatchers.any;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.test.web.servlet.MockMvc;
+
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
+
+@RunWith(SpringRunner.class)
+@WebMvcTest(UserProfileController.class)
+public class SocialBookStoreTest {
+
+    @Autowired
+    private MockMvc mockMvc;
+    
+    @MockBean
+    private UserProfileService userProfileService;
+    
+    @Test
+    public void testSaveProfile() throws Exception {
+        // Δημιουργούμε ένα δείγμα UserProfileDto για το post request
+        UserProfileDto testDto = new UserProfileDto();
+        testDto.setUsername("testUser");
+        testDto.setFullName("Test User FullName");
+        testDto.setAge(30);
+        testDto.setFavouriteBookAuthors("Author A, Author B");
+        testDto.setFavouriteBookCategories(new String[] {"Science", "Literature"});
+        
+        // Δεν χρειάζεται να επιστρέψουμε κάτι από το service γιατί είναι void μέθοδος,
+        // αλλά μπορούμε να ελέγξουμε ότι καλείται.
+        Mockito.doNothing().when(userProfileService).saveProfileBusinessLogic(any(UserProfileDto.class));
+        
+        // Εκτελούμε το POST request προς το /user/save_profile με το testDto
+        mockMvc.perform(post("/user/save_profile")
+                .flashAttr("profile", testDto)) // Το flashAttr επιτρέπει να περάσουμε το model attribute
+                .andExpect(status().isOk()) // Περιμένουμε κωδικό 200
+                .andExpect(view().name("user/dashboard")); // Περιμένουμε να γυρίσει η view "user/dashboard"
+
+        // Επαλήθευση ότι το service κλήθηκε μια φορά με το συγκεκριμένο DTO
+        Mockito.verify(userProfileService, Mockito.times(1)).saveProfileBusinessLogic(any(UserProfileDto.class));
+    }
+}
